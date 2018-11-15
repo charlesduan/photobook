@@ -1,0 +1,14 @@
+full page bleed:
+    pattern: v
+page centered:
+    pattern: a
+four square:
+    pattern: vvvv
+two horiz bleed:
+    pattern: hh
+two horiz center:
+    pattern: hh
+horiz then two vert:
+    pattern: hvv
+two vert then horiz:
+    pattern: vvh
