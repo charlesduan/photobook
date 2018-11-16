@@ -41,7 +41,7 @@ class Photobook
           x[0].count < @params['max_pages']
         }
       end
-      arrangements = arrangements.sort_by do |arr| -score_arrangement(arr) end
+      arrangements = arrangements.sort_by { |arr| -score_arrangement(arr) }
       return choose_arrangements(arrangements, 3).map(&:flatten)
     end
 
@@ -66,9 +66,9 @@ class Photobook
 
     def choose_one_arrangement(arrangements)
       arrangements.each_index do |i|
-        return arrangements.delete_at(i) if rand < 0.5
+        return arrangements.delete_at(i) if rand < 0.4
       end
-      return arrangements.first
+      return choose_one_arrangement(arrangements)
     end
 
     #

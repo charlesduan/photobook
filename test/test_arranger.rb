@@ -11,6 +11,7 @@ class TestArranger < Minitest::Unit::TestCase
       'layout-v' => { 'pattern' => 'v' },
       'layout-h' => { 'pattern' => 'h' },
       'layout-aa' => { 'pattern' => 'aa' },
+      'layout-aaaaa' => { 'pattern' => 'aaaaa' },
     })
   end
 
@@ -40,6 +41,38 @@ class TestArranger < Minitest::Unit::TestCase
       assert_empty these_exp_photos - obj.photos
     end
     assert_empty exp_photos
+  end
+
+  def make_group(layout)
+    i = 0
+    return Photobook::Group.new(layout, layout.pattern.map { |p|
+      i += 1
+      p = :v if p == :a
+      Photobook::Photo.new("photo-#{i}", p)
+    })
+  end
+
+  def test_score_arrangement
+    lm = make_layout_manager
+    arr = Photobook::Arranger.new(lm, [])
+    group1 = make_group(lm.layout_for('layout-v'))
+    group2 = make_group(lm.layout_for('layout-h'))
+    group3 = make_group(lm.layout_for('layout-aa'))
+    group4 = make_group(lm.layout_for('layout-aaaaa'))
+    assert_equal 1, arr.score_arrangement([ [], group1 ])
+    assert_equal 5, arr.score_arrangement([ [], group4 ])
+    assert_equal 4, arr.score_arrangement([ [ group1 ], group4 ])
+    assert_equal 4, arr.score_arrangement([ [ group4 ], group1 ])
+    try_cases(
+      [ [ [ group1 ], group4 ], :==, [ [ group4 ], group1 ] ],
+      [ [ [ group1 ], group1 ], :<, [ [ group2 ], group1 ] ],
+      [ [ [ group2 ], group1 ], :<, [ [ group3 ], group1 ] ],
+      [ [ [ group2 ], group1 ], :<, [ [ group1 ], group3 ] ],
+      [ [ [ group1, group2 ], group3 ], :==, [ [ group4, group2 ], group3 ] ],
+      [ [ [ group1, group2 ], group3 ], :>, [ [ group3, group2 ], group3 ] ],
+    ) do |arr1, op, arr2|
+      arr.score_arrangement(arr1).must_be(op, arr.score_arrangement(arr2))
+    end
   end
 
 end

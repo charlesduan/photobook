@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+
+require 'photobook'
+require 'optparse'
+require 'ostruct'
+
+@options = OpenStruct.new(
+  :in_place => false,
+  :outfile => nil,
+  :layout_manager => nil,
+)
+
+opt_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename $0} [options] [photo-list]"
+  opts.summary_width = 25
+  opts.separator("")
+  opts.separator("Options:")
+
+  opts.on('-i', '--in-place', 'Edit the photo list in-place') do
+    @options.in_place = true
+  end
+
+  opts.on('-o', '--output FILE', 'Output file') do |file|
+    @options.outfile = file
+    if File.exist?(file)
+      warn("Output file #{file} exists; replace? (y/n)")
+      exit 1 unless STDIN.gets =~ /^y/i
+    end
+  end
+
+  opts.on_tail('-h', '--help', 'Show this help') do
+    puts opts
+    exit
+  end
+
+  opts.on('-l', '--layouts FILE', 'File with layout specifications') do |f|
+    @options.layout_manager = Photobook::LayoutManager.new(f)
+  end
+
+end
+
+opt_parser.parse!(ARGV)
+unless @options.layout_manager
+  warn("No layout manager given; using default")
+  @options.layout_manager = Photobook::LayoutManager.new({
+    'default' => {
+      'pattern' => 'a', 'margin' => 1, 'spacing' => 1, 'grid' => '1x1'
+    }
+  })
+end
+
+if @options.in_place && ARGV.last
+  @options.outfile = ARGV.last
+end
+
+list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read) do |photo|
+  IO.popen([
+    'exiftool', '-f', '-p', '${Orientation#},${ImageSize}', photo
+  ]) do |io|
+    text = io.read
+    if text =~ /^(.),(\d+)x(\d+)$/
+      horiz = ($2.to_i > $3.to_i) ^ (%w(5 6 7 8).include?($1))
+      res = horiz ? :h : :v
+    else
+      raise "Could not read image size of #{photo}: #{text}"
+    end
+    res
+  end
+end
+list.arrange
+
+out_io = if @options.outfile then File.open(@options.outfile, 'w')
+         else STDOUT end
+
+out_io.write(list.to_s)
+out_io.close
+
+

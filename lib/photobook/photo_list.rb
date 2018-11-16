@@ -1,43 +1,5 @@
 class Photobook
 
-  class Group
-    def initialize(layout, photos, params = {})
-      @layout = layout
-      @params = params
-      @photos = photos
-
-      raise ArgumentError unless @params.is_a?(Hash)
-      unless @photos.is_a?(Array) && !@photos.empty?
-        raise "Photos may not be empty"
-      end
-      unless @layout.nil?
-        raise ArgumentError unless @layout.is_a?(Layout)
-        m = @layout.match(@photos)
-        raise "PhotoList::Group's photos do not match its layout" if m.nil?
-        if m != @photos
-          warn("PhotoList::Group's photos are out of order; fixing")
-          @photos = m
-        end
-      end
-    end
-
-    attr_reader :layout, :params, :photos
-
-    def to_s
-      res = ""
-      res << "PAGE" << (@layout ? " #{@layout.name}" : "") << "\n"
-      unless @params.empty?
-        @params.each { |k, v| res << "  #{k}: #{v}\n" }
-        res << "\n"
-      end
-      @photos.each do |photo|
-        res << "#{photo.name} (#{photo.orientation})\n"
-      end
-      res << "-----\n"
-      return res
-    end
-  end
-
   class PhotoList
 
     def initialize(layout_manager, lines)
@@ -100,6 +62,14 @@ class Photobook
 
     def to_s
       @groups.map { |x| x.to_s }.join("\n")
+    end
+
+    def arrange
+      @groups = @groups.map { |group|
+        if group.layout then group
+        else Arranger.new(@layout_manager, group.photos, group.params).arrange
+        end
+      }.flatten
     end
 
   end

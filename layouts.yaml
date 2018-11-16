@@ -1,14 +1,45 @@
 full page bleed:
     pattern: v
+    grid: '1x1'
+    margin: -0.25
 page centered:
     pattern: a
+    grid: '1x1'
+    margin: 1
 four square:
     pattern: vvvv
+    grid: '2x2'
+    margin: 0.5
+    spacing: 0.5
 two horiz bleed:
     pattern: hh
+    margin: -0.25
+    grid: '2x1'
+    spacing: 0.5
 two horiz center:
     pattern: hh
-horiz then two vert:
-    pattern: hvv
-two vert then horiz:
-    pattern: vvh
+    margin: 0.5
+    spacing: 0.5
+    grid: '2x1'
+any then two vert:
+    pattern: avv
+    margin: 0.5
+    spacing: 0.5
+    boxes:
+        - 1
+        - 2
+two vert then any:
+    pattern: vva
+    margin: 0.5
+    spacing: 0.5
+    boxes:
+        - 2
+        - 1
+five horiz:
+    pattern: hhhhh
+    margin: 0.5
+    spacing: 0.5
+    boxes:
+        - 2
+        - 2
+        - 1
