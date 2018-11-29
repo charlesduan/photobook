@@ -65,11 +65,11 @@ class Photobook
     # Only the dimension that changes is returned (so for :horiz the height is
     # returned, and for :vert the width is returned).
     #
-    def box_size(params, width, height, direction, index, box_count)
-      dim_to_adjust = (direction == :horiz ? width : height)
+    def box_size(params, total_size, spacing, index, box_count)
+      total_size -= spacing * (box_count - 1)
 
       sizes = params['sizes']
-      return dim_to_adjust / box_count.to_f unless sizes
+      return total_size / box_count.to_f unless sizes
 
       unless sizes.is_a?(Array) && sizes.count == box_count
         raise ArgumentError, "Sizes parameter is not an array of correct size"
@@ -79,7 +79,7 @@ class Photobook
         raise ArgumentError, "Sizes must be between 0 and 1"
       end
 
-      return sizes[index] * dim_to_adjust
+      return sizes[index] * total_size
 
     end
 
@@ -113,15 +113,15 @@ class Photobook
     #
     def boxes(spec, width, height, direction = :vert, last_gravity = 0.5)
       params = @page_params.merge(spec.find { |x| x.is_a?(Hash) } || {})
+      spacing = spacing_size(params)
 
       box(direction, width, height) do
         first = true
         spec = spec.reject { |x| x.is_a?(Hash) }
         spec.each_with_index do |item, index|
-          space(spacing_size(params), direction) unless first
+          space(spacing, direction) unless first
           first = false
 
-          size = box_size(params, width, height, direction, index, spec.count)
           this_gravity = compute_gravity(params, index, spec.count)
 
           #
@@ -130,10 +130,12 @@ class Photobook
           # horizontally. The opposite is true for a horizontal box.
           #
           if direction == :vert
-            this_height, this_width, next_dir = size, width, :horiz
+            this_width, next_dir = width, :horiz
+            this_height = box_size(params, height, spacing, index, spec.count)
             horiz_gravity, vert_gravity = last_gravity, this_gravity
           else
-            this_height, this_width, next_dir = height, size, :vert
+            this_height, next_dir = height, :vert
+            this_width = box_size(params, width, spacing, index, spec.count)
             horiz_gravity, vert_gravity = this_gravity, last_gravity
           end
 

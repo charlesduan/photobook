@@ -15,6 +15,9 @@ class Photobook
   \\hfil}\\vfil}%
 }
 
+\\topskip=0pt
+\\lineskip=0pt
+
 \\begin{document}
 
       EOF
@@ -25,15 +28,14 @@ class Photobook
     end
 
     def page(group, margin)
-      puts("\\vskip #{margin}bp\\relax")
-      puts("\\moveright #{margin}bp\\hbox{%")
+      puts("\\vbox{\\vskip #{margin}bp\\relax\\moveright #{margin}bp\\hbox{%")
       begin
         @indent = "  "
         yield
       ensure
         @indent = ""
       end
-      puts("}%")
+      puts("}}%")
       puts("\\clearpage")
       puts("")
     end
@@ -55,11 +57,12 @@ class Photobook
     end
 
     def space(size, direction)
-      case direction
-      when :vert then puts("#@indent\\vskip #{size}bp\\relax")
-      when :horiz then puts("#@indent\\hskip #{size}bp\\relax")
-      else raise ArgumentError
-      end
+      dirword = case direction
+                when :vert then "\\vskip"
+                when :horiz then "\\hskip"
+                else raise ArgumentError
+                end
+      puts("#@indent#{dirword} #{size}bp plus 0.1bp minus 0.1bp\\relax")
     end
 
 
