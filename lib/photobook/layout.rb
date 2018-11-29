@@ -5,22 +5,22 @@ class Photobook::Layout
     end
   end
 
-  def initialize(name, spec)
+  def initialize(name, params)
     @name = name
-    @spec = spec
-    @pages_used = @spec['pages'] || 1
-    @pattern = @spec['pattern'].split(//).map { |p|
+    @params = params
+    @pages_used = @params['pages'] || 1
+    @pattern = @params['pattern'].split(//).map { |p|
       case p
       when /[hl]/i then :h
       when /[vp]/i then :v
       when /[a*]/i then :a
-      else raise "Invalid pattern spec #{@spec['pattern']}"
+      else raise "Invalid pattern spec #{@params['pattern']}"
       end
     }
     @photos_used = @pattern.count
   end
 
-  attr_reader :pages_used, :photos_used, :pattern, :name
+  attr_reader :pages_used, :photos_used, :pattern, :name, :params
 
   #
   # Matches an array of photos against the pattern. If the photos cannot match

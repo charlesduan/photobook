@@ -8,6 +8,7 @@ require 'ostruct'
   :in_place => false,
   :outfile => nil,
   :layout_manager => nil,
+  :texfile => nil,
 )
 
 opt_parser = OptionParser.new do |opts|
@@ -22,6 +23,14 @@ opt_parser = OptionParser.new do |opts|
 
   opts.on('-o', '--output FILE', 'Output file') do |file|
     @options.outfile = file
+    if File.exist?(file)
+      warn("Output file #{file} exists; replace? (y/n)")
+      exit 1 unless STDIN.gets =~ /^y/i
+    end
+  end
+
+  opts.on('-t', '--tex-file FILE', 'LaTeX output file') do |file|
+    @options.texfile = file
     if File.exist?(file)
       warn("Output file #{file} exists; replace? (y/n)")
       exit 1 unless STDIN.gets =~ /^y/i
@@ -67,12 +76,20 @@ list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read) do |photo|
     res
   end
 end
-list.arrange
 
-out_io = if @options.outfile then File.open(@options.outfile, 'w')
-         else STDOUT end
+if list.needs_arranging
+  list.arrange
 
-out_io.write(list.to_s)
-out_io.close
+  out_io = if @options.outfile then File.open(@options.outfile, 'w')
+           else STDOUT end
 
+  out_io.write(list.to_s)
+  out_io.close
+end
 
+if @options.texfile
+  File.open(@options.texfile, 'w') do |tex_io|
+    positioner = Photobook::LaTeXPositioner.new(tex_io)
+    positioner.make_document(list)
+  end
+end

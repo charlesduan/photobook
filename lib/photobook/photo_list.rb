@@ -64,6 +64,10 @@ class Photobook
       @groups.map { |x| x.to_s }.join("\n")
     end
 
+    def needs_arranging
+      @groups.any? { |group| !group.layout }
+    end
+
     def arrange
       @groups = @groups.map { |group|
         if group.layout then group
