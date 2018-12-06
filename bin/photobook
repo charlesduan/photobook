@@ -4,6 +4,8 @@ require 'photobook'
 require 'optparse'
 require 'ostruct'
 
+require 'fastimage'
+
 @options = OpenStruct.new(
   :in_place => false,
   :outfile => nil,
@@ -63,17 +65,9 @@ if @options.in_place && ARGV.last
 end
 
 list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read) do |photo|
-  IO.popen([
-    'exiftool', '-f', '-p', '${Orientation#},${ImageSize}', photo
-  ]) do |io|
-    text = io.read
-    if text =~ /^(.),(\d+)x(\d+)$/
-      horiz = ($2.to_i > $3.to_i) ^ (%w(5 6 7 8).include?($1))
-      res = horiz ? :h : :v
-    else
-      raise "Could not read image size of #{photo}: #{text}"
-    end
-    res
+  open(photo) do |io|
+    data = FastImage.new(photo)
+    [ data.size[0], data.size[1], data.orientation ]
   end
 end
 

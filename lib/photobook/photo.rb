@@ -1,16 +1,22 @@
 class Photobook::Photo
 
-  def initialize(name, orientation)
+  def initialize(name, width, height, exif_orientation = nil)
     @name = name
-    @orientation = orientation
-    raise 'Invalid orientation' unless [ :h, :v ].include?(orientation)
+    @width = width
+    @height = height
+    @exif_orientation = exif_orientation
   end
 
   def to_s
-    "[#{@name} #{@orientation}]"
+    o = [ nil, 1 ].include?(@exif_orientation) ? "" : ",#@exif_orientation"
+    return "#@name (#{@width}x#{@height}#{o})"
   end
 
-  attr_reader :name, :orientation
+  attr_reader :name, :exif_orientation, :width, :height
+
+  def orientation
+    return @width > @height ? :h : :v
+  end
 end
 
 

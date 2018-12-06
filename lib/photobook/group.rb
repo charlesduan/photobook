@@ -30,7 +30,7 @@ class Photobook
         res << "\n"
       end
       @photos.each do |photo|
-        res << "#{photo.name} (#{photo.orientation})\n"
+        res << "#{photo}\n"
       end
       res << "-----\n"
       return res

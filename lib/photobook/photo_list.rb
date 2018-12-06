@@ -23,8 +23,9 @@ class Photobook
         case line
         when /^-----$/ then break
         when /^\s*$/ then next
-        when /\s+\((\w+)\)$/ then photos.push(Photo.new($`, $1.to_sym))
-        else photos.push(Photo.new(line, yield(line)))
+        when /\s+\((\w+)\)$/
+          photos.push(Photo.new($`, *$1.split(/[x,]/).map(&:to_i)))
+        else photos.push(Photo.new(line, *yield(line)))
         end
       end
       @groups.push(Group.new(layout, photos, params)) unless photos.empty?
