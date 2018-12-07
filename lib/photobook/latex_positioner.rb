@@ -2,6 +2,7 @@ class Photobook
   class LaTeXPositioner < Positioner
 
     def document(params, width, height)
+      @width, @height = width, height
       puts(<<-EOF)
 \\documentclass[12pt]{article}
 
@@ -13,6 +14,14 @@ class Photobook
   \\vbox to #3{\\vskip 0pt plus #5\\hbox to #2{\\hskip 0pt plus #4%
     \\includegraphics[width=#2,height=#3,keepaspectratio]{#1}%
   \\hfil}\\vfil}%
+}
+\\def\\backgroundphoto#1#2#3{%
+  \\vbox to 0pt{%
+    \\hbox{%
+      \\includegraphics[bb=0 0 #2 #3,width=#{width}bp, height=#{height}bp]{#1}%
+    }%
+    \\vss
+  }%
 }
 
 \\topskip=0pt
@@ -27,8 +36,15 @@ class Photobook
       puts("\\end{document}")
     end
 
+    def insert_background(photo)
+      w, h = fill_crop(photo, @width, @height)
+      puts "\\backgroundphoto{#{photo.name}}{#{w}}{#{h}}%"
+    end
+
     def page(group, margin)
-      puts("\\vbox{\\vskip #{margin}bp\\relax\\moveright #{margin}bp\\hbox{%")
+      puts("\\vbox{%")
+      insert_background(group.background) if group.background
+      puts("\\vskip #{margin}bp\\relax\\moveright #{margin}bp\\hbox{%")
       begin
         @indent = "  "
         yield

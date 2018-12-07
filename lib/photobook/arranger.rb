@@ -1,6 +1,8 @@
 class Photobook
   class Arranger
 
+    include WeightedSample
+
     def initialize(layout_manager, photos, params = {})
       @layout_manager, @photos, @params = layout_manager, photos, params
       @save_params = @params.reject { |k, v| %w(max_pages).include?(k) }
@@ -8,7 +10,7 @@ class Photobook
 
     def make_group(layout, photos)
       return nil unless layout && photos
-      Group.new(layout, photos, @save_params)
+      Group.new(layout, photos, @save_params.dup)
     end
 
     def arrange
@@ -65,10 +67,8 @@ class Photobook
     end
 
     def choose_one_arrangement(arrangements)
-      arrangements.each_index do |i|
-        return arrangements.delete_at(i) if rand < 0.4
-      end
-      return choose_one_arrangement(arrangements)
+      index = weighted_sample(0...arrangements.count, 0.4)
+      return arrangements.delete_at(index)
     end
 
     #

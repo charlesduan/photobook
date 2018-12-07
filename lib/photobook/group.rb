@@ -35,6 +35,20 @@ class Photobook
       res << "-----\n"
       return res
     end
-  end
 
+    def background
+      if !@background && @params['background']
+        @background = Photo.parse(@params['background'])
+      end
+      return @background
+    end
+
+    def background=(photo)
+      raise ArgumentError unless photo.is_a?(Photo)
+      @background = photo
+      @params['background'] = photo.to_s
+      return photo
+    end
+
+  end
 end

@@ -188,5 +188,19 @@ class Photobook
       end
     end
 
+    #
+    # Computes the resolution of a photo crop that is as large as possible while
+    # having the aspect ratio as given. Returns a two-element array of width and
+    # height for the photo.
+    #
+    def fill_crop(photo, width, height)
+      want_ratio = width.to_f / height
+      if want_ratio * photo.height <= photo.width
+        return [ (want_ratio * photo.height).round, photo.height ]
+      else
+        return [ photo.width, (photo.width / want_ratio).round ]
+      end
+    end
+
   end
 end

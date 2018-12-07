@@ -1,19 +1,23 @@
 class Photobook
-
   class PhotoList
+
+    include WeightedSample
 
     def initialize(layout_manager, lines)
       @layout_manager = layout_manager
       @groups = []
+      @dirty = false
 
       lines = lines.split(/\n/) if lines.is_a?(String)
 
-      parse(lines.dup) do |photo|
-        yield(photo)
-      end
+      parse(lines.dup)
     end
 
     attr_reader :groups, :layout_manager
+
+    def dirty?
+      @dirty
+    end
 
     def parse(lines)
       layout, params = parse_layout(lines)
@@ -23,9 +27,7 @@ class Photobook
         case line
         when /^-----$/ then break
         when /^\s*$/ then next
-        when /\s+\((\w+)\)$/
-          photos.push(Photo.new($`, *$1.split(/[x,]/).map(&:to_i)))
-        else photos.push(Photo.new(line, *yield(line)))
+        else photos.push(Photo.parse(line))
         end
       end
       @groups.push(Group.new(layout, photos, params)) unless photos.empty?
@@ -71,10 +73,25 @@ class Photobook
 
     def arrange
       @groups = @groups.map { |group|
-        if group.layout then group
-        else Arranger.new(@layout_manager, group.photos, group.params).arrange
+        if group.layout
+          group
+        else
+          @dirty = true
+          Arranger.new(@layout_manager, group.photos, group.params).arrange
         end
       }.flatten
+    end
+
+    def add_backgrounds(photos, overwrite = false)
+      photos = photos.dup
+      @groups.each do |group|
+        next if overwrite || group.background
+        next if group.layout.params['nobackground']
+        photo = photos.delete_at(weighted_sample(0...photos.count, 0.3))
+        group.background = photo
+        photos.push(photo)
+        @dirty = true
+      end
     end
 
   end

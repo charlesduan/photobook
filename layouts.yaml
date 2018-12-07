@@ -2,6 +2,7 @@ full page bleed:
     pattern: v
     grid: '1x1'
     margin: -0.25
+    nobackground: true
 page centered:
     pattern: a
     grid: '1x1'

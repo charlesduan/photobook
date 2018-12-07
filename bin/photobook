@@ -4,13 +4,27 @@ require 'photobook'
 require 'optparse'
 require 'ostruct'
 
+if RUBY_VERSION < "2.2"
+  require 'uri'
+  module URI
+    remove_const(:DEFAULT_PARSER)
+  end
+end
 require 'fastimage'
+
+Photobook::Photo.resolution_proc = proc do |photo|
+  open(photo) do |io|
+    data = FastImage.new(photo)
+    [ data.size[0], data.size[1], data.orientation ]
+  end
+end
 
 @options = OpenStruct.new(
   :in_place => false,
   :outfile => nil,
   :layout_manager => nil,
   :texfile => nil,
+  :backgrounds => nil
 )
 
 opt_parser = OptionParser.new do |opts|
@@ -48,6 +62,12 @@ opt_parser = OptionParser.new do |opts|
     @options.layout_manager = Photobook::LayoutManager.new(f)
   end
 
+  opts.on('-b', '--backgrounds DIR', 'Directory of background images') do |d|
+    @options.backgrounds = Dir.glob("#{d}/*").map { |p|
+      Photobook::Photo.parse(p)
+    }
+  end
+
 end
 
 opt_parser.parse!(ARGV)
@@ -64,16 +84,15 @@ if @options.in_place && ARGV.last
   @options.outfile = ARGV.last
 end
 
-list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read) do |photo|
-  open(photo) do |io|
-    data = FastImage.new(photo)
-    [ data.size[0], data.size[1], data.orientation ]
-  end
+list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read)
+
+list.arrange if list.needs_arranging
+
+if @options.backgrounds
+  list.add_backgrounds(@options.backgrounds)
 end
 
-if list.needs_arranging
-  list.arrange
-
+if list.dirty?
   out_io = if @options.outfile then File.open(@options.outfile, 'w')
            else STDOUT end
 
