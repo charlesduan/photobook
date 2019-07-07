@@ -1,3 +1,5 @@
+require 'exifr/jpeg'
+
 class Photobook
   class PhotoList
 
@@ -92,6 +94,14 @@ class Photobook
         photos.push(photo)
         @dirty = true
       end
+    end
+
+    def sort_by_date
+      @dirty = true
+      photos = @groups.map { |group| group.photos }.flatten.sort_by { |photo|
+        EXIFR::JPEG.new(photo.name).date_time
+      }
+      @groups = [ Group.new(nil, photos, {}) ]
     end
 
   end

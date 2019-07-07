@@ -214,7 +214,8 @@ class Photobook
     end
 
     def make_page(group)
-      init_photos(group.photos)
+      raise "Cannot make page with no group layout" unless group.layout
+      init_photos(group.arranged_photos)
       @page_params = @global_params.merge(group.layout.params)
 
       margin = margin_size(@page_params)

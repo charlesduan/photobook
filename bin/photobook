@@ -24,7 +24,8 @@ end
   :outfile => nil,
   :layout_manager => nil,
   :texfile => nil,
-  :backgrounds => nil
+  :backgrounds => nil,
+  :sort_by_date => false,
 )
 
 opt_parser = OptionParser.new do |opts|
@@ -68,6 +69,12 @@ opt_parser = OptionParser.new do |opts|
     }
   end
 
+  opts.on(
+      '-s', '--sort-by-date', 'Sort images by date (ignores existing layout)'
+  ) do
+    @options.sort_by_date = true
+  end
+
 end
 
 opt_parser.parse!(ARGV)
@@ -86,6 +93,7 @@ end
 
 list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read)
 
+list.sort_by_date if @options.sort_by_date
 list.arrange if list.needs_arranging
 
 if @options.backgrounds

@@ -37,6 +37,7 @@ class Photobook
     end
 
     def insert_background(photo)
+      check_photo_name(photo.name)
       w, h = fill_crop(photo, @width, @height)
       puts "\\backgroundphoto{#{photo.name}}{#{w}}{#{h}}%"
     end
@@ -83,12 +84,19 @@ class Photobook
 
 
     def photo_box(photo, width, height, hgravity, vgravity)
+      check_photo_name(photo.name)
       hfill = (hgravity == 1 ? "1fill" : "#{hgravity.to_f / (1 - hgravity)}fil")
       vfill = (vgravity == 1 ? "1fill" : "#{vgravity.to_f / (1 - vgravity)}fil")
       puts(
         "#@indent\\photobox{#{photo.name}}{#{width}bp}{#{height}bp}" +
         "{#{hfill}}{#{vfill}}%"
       )
+    end
+
+    def check_photo_name(name)
+      if name =~ /\s/
+        warn("LaTeX positioner warning: Photo name `#{name}' contains spaces")
+      end
     end
 
   end

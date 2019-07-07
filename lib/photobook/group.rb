@@ -3,7 +3,7 @@ class Photobook
     def initialize(layout, photos, params = {})
       @layout = layout
       @params = params
-      @photos = photos
+      @photos = photos.dup
 
       raise ArgumentError unless @params.is_a?(Hash)
       unless @photos.is_a?(Array) && !@photos.empty?
@@ -11,11 +11,8 @@ class Photobook
       end
       unless @layout.nil?
         raise ArgumentError unless @layout.is_a?(Layout)
-        m = @layout.match(@photos)
-        raise "PhotoList::Group's photos do not match its layout" if m.nil?
-        if m != @photos
-          warn("PhotoList::Group's photos are out of order; fixing")
-          @photos = m
+        unless @layout.match?(@photos)
+          raise "PhotoList::Group's photos do not match its layout"
         end
       end
     end
@@ -48,6 +45,36 @@ class Photobook
       @background = photo
       @params['background'] = photo.to_s
       return photo
+    end
+
+    # Returns a list of photos arranged to match this group.
+    def arranged_photos
+      raise 'Cannot arrange a photo group with no layout' unless @layout
+      pattern = @layout.pattern
+      photo_orientations = @photos.map(&:orientation)
+      free = {}
+      [ :h, :v ].each do |o|
+        free[o] = photo_orientations.count(o) - pattern.count(o)
+        raise "Unexpectedly non-matching layout" if free[o] < 0
+      end
+
+      photos = @photos.dup
+      res = []
+      pattern.each do |orientation|
+        if orientation == :a
+          if free[:h] == 0 then orientation = :v
+          elsif free[:v] == 0 then orientation = :h
+          else
+            free[photos.first.orientation] -= 1
+            res.push(photos.shift)
+            next
+          end
+        end
+        pos = photos.find_index { |p| p.orientation == orientation }
+        res.push(photos.delete_at(pos))
+      end
+      raise "Unexpectedly found extra photos" unless photos.empty?
+      return res
     end
 
   end

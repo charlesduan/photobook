@@ -9,7 +9,6 @@ class Photobook
     end
 
     def make_group(layout, photos)
-      return nil unless layout && photos
       Group.new(layout, photos, @save_params.dup)
     end
 
@@ -77,8 +76,7 @@ class Photobook
     #
     def all_matches(subset)
       @layout_manager.layouts.values.map { |layout|
-        res = layout.match(subset)
-        make_group(layout, res)
+        layout.match?(subset) ? make_group(layout, subset) : nil
       }.compact
     end
 
