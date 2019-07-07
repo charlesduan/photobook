@@ -96,11 +96,21 @@ class Photobook
       end
     end
 
-    def sort_by_date
+    def clear_arrangement(sort = nil)
       @dirty = true
-      photos = @groups.map { |group| group.photos }.flatten.sort_by { |photo|
-        EXIFR::JPEG.new(photo.name).date_time || Time.at(File.mtime(photo.name))
-      }
+      photos = @groups.map { |group| group.photos }.flatten
+      case sort
+      when 'date'
+        photos = photos.sort_by { |photo|
+          EXIFR::JPEG.new(photo.name).date_time || \
+            Time.at(File.mtime(photo.name))
+        }
+      when 'name'
+        photos = photos.sort_by { |photo| photo.name }
+      when nil, 'none', 'original'
+      else
+        raise 'Unknown sort type; choose date, name, or none'
+      end
       @groups = [ Group.new(nil, photos, {}) ]
     end
 
