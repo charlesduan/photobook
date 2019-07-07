@@ -99,7 +99,7 @@ class Photobook
     def sort_by_date
       @dirty = true
       photos = @groups.map { |group| group.photos }.flatten.sort_by { |photo|
-        EXIFR::JPEG.new(photo.name).date_time
+        EXIFR::JPEG.new(photo.name).date_time || Time.at(File.mtime(photo.name))
       }
       @groups = [ Group.new(nil, photos, {}) ]
     end
