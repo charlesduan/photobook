@@ -26,6 +26,7 @@ end
   :texfile => nil,
   :backgrounds => nil,
   :sort => nil,
+  :overwrite => false,
 )
 
 opt_parser = OptionParser.new do |opts|
@@ -40,18 +41,10 @@ opt_parser = OptionParser.new do |opts|
 
   opts.on('-o', '--output FILE', 'Output file') do |file|
     @options.outfile = file
-    if File.exist?(file)
-      warn("Output file #{file} exists; replace? (y/n)")
-      exit 1 unless STDIN.gets =~ /^y/i
-    end
   end
 
   opts.on('-t', '--tex-file FILE', 'LaTeX output file') do |file|
     @options.texfile = file
-    if File.exist?(file)
-      warn("Output file #{file} exists; replace? (y/n)")
-      exit 1 unless STDIN.gets =~ /^y/i
-    end
   end
 
   opts.on_tail('-h', '--help', 'Show this help') do
@@ -77,9 +70,25 @@ opt_parser = OptionParser.new do |opts|
     @options.sort = sort || 'none'
   end
 
+  opts.on('-f', '--force-overwrite', 'Overwrite files without asking') do
+    @options.overwrite = true
+  end
+
 end
 
 opt_parser.parse!(ARGV)
+
+# Check for file overwrites
+unless @options.overwrite
+  [ @options.outfile, @options.texfile ].each do |f|
+    if f && File.exist?(f)
+      warn("Output file #{f} exists; replace? (y/n)")
+      exit 1 unless STDIN.gets =~ /^y/i
+    end
+  end
+end
+
+# Check that at least one layout is present
 if @options.layout_manager.layouts.empty?
   warn("No layouts specified; using default")
   @options.layout_manager.parse({
@@ -89,30 +98,32 @@ if @options.layout_manager.layouts.empty?
   })
 end
 
+# Set up for in-place editing (done after file overwrite testing since the
+# implication of in-place editing is that you intend for overwriting)
 if @options.in_place && ARGV.last
   @options.outfile = ARGV.last
 end
 
+# Read and process the list of photos
 list = Photobook::PhotoList.new(@options.layout_manager, ARGF.read)
-
 list.clear_arrangement(@options.sort) if @options.sort
 list.arrange if list.needs_arranging
+list.add_backgrounds(@options.backgrounds) if @options.backgrounds
 
-if @options.backgrounds
-  list.add_backgrounds(@options.backgrounds)
-end
-
+# Write the list as necessary
 if list.dirty?
-  out_io = if @options.outfile then File.open(@options.outfile, 'w')
-           else STDOUT end
-
+  out_io = @options.outfile ? File.open(@options.outfile, 'w') : STDOUT
   out_io.write(list.to_s)
   out_io.close
 end
 
+# Produce TeX file
 if @options.texfile
   File.open(@options.texfile, 'w') do |tex_io|
     positioner = Photobook::LaTeXPositioner.new(tex_io)
     positioner.make_document(list)
   end
 end
+
+
+
