@@ -22,7 +22,7 @@ end
 @options = OpenStruct.new(
   :in_place => false,
   :outfile => nil,
-  :layout_manager => nil,
+  :layout_manager => Photobook::LayoutManager.new,
   :texfile => nil,
   :backgrounds => nil,
   :sort => nil,
@@ -60,7 +60,9 @@ opt_parser = OptionParser.new do |opts|
   end
 
   opts.on('-l', '--layouts FILE', 'File with layout specifications') do |f|
-    @options.layout_manager = Photobook::LayoutManager.new(f)
+    file = Photobook::LayoutManager.find_layout_file(f)
+    raise "No layout file #{f} found" unless file
+    @options.layout_manager.parse(file)
   end
 
   opts.on('-b', '--backgrounds DIR', 'Directory of background images') do |d|
@@ -78,9 +80,9 @@ opt_parser = OptionParser.new do |opts|
 end
 
 opt_parser.parse!(ARGV)
-unless @options.layout_manager
-  warn("No layout manager given; using default")
-  @options.layout_manager = Photobook::LayoutManager.new({
+if @options.layout_manager.layouts.empty?
+  warn("No layouts specified; using default")
+  @options.layout_manager.parse({
     'default' => {
       'pattern' => 'a', 'margin' => 1, 'spacing' => 1, 'grid' => '1x1'
     }

@@ -19,6 +19,10 @@ class Photobook
         @memo[size] = select_best_arrangements(arrange_subset(size))
       end
 
+      unless @memo.last.first
+        raise "Arranger failed! Memo array is: #{@memo.inspect}"
+      end
+
       return @memo.last.first
     end
 

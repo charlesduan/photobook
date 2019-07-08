@@ -214,6 +214,7 @@ class Photobook
     end
 
     def make_page(group)
+      raise "Got a nil group" unless group.layout
       raise "Cannot make page with no group layout" unless group.layout
       init_photos(group.arranged_photos)
       @page_params = @global_params.merge(group.layout.params)

@@ -6,13 +6,31 @@ class Photobook
       puts(<<-EOF)
 \\documentclass[12pt]{article}
 
-\\usepackage{geometry}
+\\usepackage{geometry,color,graphicx}
+
 \\geometry{paperwidth=#{width}bp, paperheight=#{height}bp, margin=0pt}
 
-\\usepackage{graphicx}
+\\makeatletter
+\\def\\overlayname#1{%
+    \\llap{%
+        \\sffamily\\bfseries
+        \\setbox\\@tempboxa=\\hbox{%
+            \\colorbox{black}{%
+                \\color{white}
+                \\def\\reserved@a{#1}%
+                \\expandafter\\strip@prefix\\meaning\\reserved@a
+            }%
+        }%
+        \\dp\\@tempboxa=\\z@
+        \\raise 1ex\\box\\@tempboxa
+    }%
+}
+\\makeatother
+
 \\def\\photobox#1#2#3#4#5{%
   \\vbox to #3{\\vskip 0pt plus #5\\hbox to #2{\\hskip 0pt plus #4%
     \\includegraphics[width=#2,height=#3,keepaspectratio]{#1}%
+		\\overlayname{#1}%
   \\hfil}\\vfil}%
 }
 \\def\\backgroundphoto#1#2#3{%
